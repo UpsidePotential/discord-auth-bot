@@ -7,6 +7,7 @@ import {promisify} from 'util';
 interface AuthUser {
     discordUser: string;
     token: string;
+    callback: () => void;
 }
 
 export class Auth
@@ -14,7 +15,7 @@ export class Auth
     private static SA_PROFILE_URL: string = "https://forums.somethingawful.com/member.php?action=getinfo&username=";
     private authUsers: AuthUser[] = [];
 
-    userJoin(user: User): void {
+    userJoin(user: User, callback: () => void): void {
         const token = Auth.generateToken();
 
         user.send({
@@ -28,7 +29,7 @@ export class Auth
             }
         });
 
-        this.authUsers.push({discordUser: user.id, token});
+        this.authUsers.push({discordUser: user.id, token, callback});
     }
 
     async authUser(forumsUsername: string, discordUser: User): Promise<void> {
@@ -39,7 +40,7 @@ export class Auth
        const validated = await this.validateToken(forumsUsername, user.token);
        if(validated) {
            console.log('welp this one is ok');
-           //await discordUser.addRole('Auth Goon', 'bot did it');
+           user.callback();
        } else {
            throw Error('nopes');
        }

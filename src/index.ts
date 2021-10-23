@@ -16,7 +16,11 @@ client.on('message', msg => {
   }
 
   if(msg.type === 'GUILD_MEMBER_JOIN') {
-    auth.userJoin(msg.author);
+    auth.userJoin(msg.author, () => {
+      const role = msg.member.guild.roles.find(role => role.name === "Authed Goon");
+      if (!role) return;
+      msg.member.addRole(role);
+    });
   } else {
     if(msg.channel.type === 'dm') {
       //todo scrub this content. regex it for a valid username
