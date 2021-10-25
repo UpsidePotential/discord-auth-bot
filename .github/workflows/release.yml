@@ -3,8 +3,7 @@ on:
     types: [created]
 name: Release
 jobs:
-  generate:
-    name: Create release-artifacts
+  publish:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -12,12 +11,8 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ env.NODE_VERSION }}
-    - name: npm install, build
-      run: |
-        # Build and test the project
-        npm install
-        npm run build
-        npm run package
+    - name: Build and Package
+      uses: skx/github-action-build@master
     - name: Upload the artifacts
       uses: skx/github-action-publish-binaries@release-2.0
       env:
