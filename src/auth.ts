@@ -1,65 +1,75 @@
 import got from 'got';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from 'discord.js';
-import {CookieJar} from 'tough-cookie';
-import {promisify} from 'util';
+import { CookieJar } from 'tough-cookie';
+import { promisify } from 'util';
 
 interface AuthUser {
     discordUser: string;
     token: string;
-    callback: () => void;
+    callback: (valid: Boolean, error: string) => void;
 }
 
-export class Auth
-{
-    private static SA_PROFILE_URL: string = "https://forums.somethingawful.com/member.php?action=getinfo&username=";
+export class Auth {
+    private static SA_PROFILE_URL: string = 'https://forums.somethingawful.com/member.php?action=getinfo&username=';
+
     private authUsers: AuthUser[] = [];
 
-    userJoin(user: User, callback: () => void): void {
-        const token = Auth.generateToken();
+    userJoin(user: User, callback: (valid: Boolean, error: string) => void): void {
+      const token = Auth.generateToken();
 
-        user.send({
-            embed: {
-                color: 3447003,
-                title: 'Welcome to our discord',
-                description: 'Add this to your profile and reply with username',
-                fields: [ 
-                    { name: 'Token', value: token }
-                ]
-            }
-        });
+      user.send({
+        embed: {
+          color: 3447003,
+          title: 'Welcome to our discord',
+          description: 'To verify you have an active account. Edit your profile and add the token anywhere on the profile page. '
+                    + 'Once finished, reply to this message with your Username. You account page will be scaned for the token then your account with be authenticated.',
+          fields: [
+            { name: 'Edit Profile', value: 'https://forums.somethingawful.com/member.php?action=editprofile' },
+            { name: 'Token', value: token },
+          ],
+        },
+      });
 
-        this.authUsers.push({discordUser: user.id, token, callback});
+      this.authUsers.push({ discordUser: user.id, token, callback });
     }
 
     async authUser(forumsUsername: string, discordUser: User): Promise<void> {
-       const user = this.authUsers.find( (v) => v.discordUser === discordUser.id)
-       if(user === undefined) {
-           return;
-       }
-       const validated = await this.validateToken(forumsUsername, user.token);
-       if(validated) {
-           console.log('welp this one is ok');
-           user.callback();
-       } else {
-           throw Error('nopes');
-       }
+      const user = this.authUsers.find((v) => v.discordUser === discordUser.id);
+      if (user === undefined) {
+        return;
+      }
+
+      try {
+        const validated = await Auth.validateToken(forumsUsername, user.token);
+        if (validated) {
+          user.callback(true, '');
+        } else {
+          user.callback(false, 'Failed to find token on page. Verify token is on page and resend username');
+        }
+      } catch (e) {
+        user.callback(false, e);
+      }
     }
 
     public static generateToken(): string {
-        return uuidv4();
+      return uuidv4();
     }
 
-    private async validateToken(username: string, token: string): Promise<Boolean> {
-        const cookieJar = new CookieJar();
-        const setCookie = promisify(cookieJar.setCookie.bind(cookieJar));
-        
-        await setCookie(`sessionid=${process.env.COOKIE_SESSIONID}`, 'https://forums.somethingawful.com');
-        await setCookie(`sessionhash=${process.env.COOKIE_SESSIONHASH}`, 'https://forums.somethingawful.com');
-        await setCookie(`bbuserid=${process.env.COOKIE_BBUSERID}`, 'https://forums.somethingawful.com');
-        await setCookie(`bbpassword=${process.env.COOKIE_BBPASSWORD}`, 'https://forums.somethingawful.com');
+    private static async validateToken(username: string, token: string): Promise<Boolean> {
+      const cookieJar = new CookieJar();
+      const setCookie = promisify(cookieJar.setCookie.bind(cookieJar));
 
-        const result = await got(`${Auth.SA_PROFILE_URL}${encodeURIComponent(username)}`, {cookieJar});
-        return result.body.includes(token);
+      await setCookie(`sessionid=${process.env.COOKIE_SESSIONID}`, 'https://forums.somethingawful.com');
+      await setCookie(`sessionhash=${process.env.COOKIE_SESSIONHASH}`, 'https://forums.somethingawful.com');
+      await setCookie(`bbuserid=${process.env.COOKIE_BBUSERID}`, 'https://forums.somethingawful.com');
+      await setCookie(`bbpassword=${process.env.COOKIE_BBPASSWORD}`, 'https://forums.somethingawful.com');
+
+      const result = await got(`${Auth.SA_PROFILE_URL}${encodeURIComponent(username)}`, { cookieJar });
+      // check if page failed to login and throw if not
+      if (result.body.includes('Sorry, you must be a registered forums member to view this page.')) {
+        throw Error('Failed to verify account, cookies have expired. Contact mods');
+      }
+      return result.body.includes(token);
     }
 }
