@@ -19,8 +19,8 @@ jobs:
         npm run build
         npm run package
     - name: Upload the artifacts
-        uses: skx/github-action-publish-binaries@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: './dist/*.exe'
+      uses: skx/github-action-publish-binaries@release-2.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        args: './dist/*.exe'
