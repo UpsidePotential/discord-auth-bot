@@ -37,4 +37,11 @@ client.on('message', (msg) => {
   }
 });
 
-client.login(process.env.TOKEN);
+console.log('Logging in to discord');
+
+client.login(process.env.TOKEN).then(() => {
+  console.log('logged in.');
+},
+(error) => {
+  console.error('failed to log in error: ', error);
+});
