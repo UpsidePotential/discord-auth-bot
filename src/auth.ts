@@ -7,7 +7,7 @@ import { promisify } from 'util';
 interface AuthUser {
     discordUser: string;
     token: string;
-    callback: (valid: Boolean, error: string) => void;
+    callback: (valid: Boolean, value: string) => void;
 }
 
 export class Auth {
@@ -15,8 +15,8 @@ export class Auth {
 
     private authUsers: AuthUser[] = [];
 
-    userJoin(user: User, callback: (valid: Boolean, error: string) => void): void {
-      const token = Auth.generateToken();
+    userJoin(user: User, callback: (valid: Boolean, value: string) => void): void {
+      const token = Auth.generateToken().replace('-', '');
 
       user.send({
         embed: {
@@ -26,10 +26,11 @@ export class Auth {
                     + 'Once finished, reply to this message with your Username. You account page will be scaned for the token then your account with be authenticated.',
           fields: [
             { name: 'Edit Profile', value: 'https://forums.somethingawful.com/member.php?action=editprofile' },
-            { name: 'Token', value: token },
           ],
         },
       });
+
+      user.send(`token: ${token}`);
 
       this.authUsers.push({ discordUser: user.id, token, callback });
     }
@@ -43,7 +44,7 @@ export class Auth {
       try {
         const validated = await Auth.validateToken(forumsUsername, user.token);
         if (validated) {
-          user.callback(true, '');
+          user.callback(true, forumsUsername);
         } else {
           user.callback(false, 'Failed to find token on page. Verify token is on page and resend username');
         }

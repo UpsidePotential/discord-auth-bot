@@ -16,7 +16,7 @@ client.on('message', (msg) => {
   }
 
   if (msg.type === 'GUILD_MEMBER_JOIN') {
-    auth.userJoin(msg.author, (valid: Boolean, error: string) => {
+    auth.userJoin(msg.author, (valid: Boolean, value: string) => {
       if (valid) {
         const role = msg.member.guild.roles.find((r) => r.name === 'Authed Goon');
         if (!role) {
@@ -24,12 +24,19 @@ client.on('message', (msg) => {
           return;
         }
         console.log(`Success Auth'd User ${msg.author.username}`);
-        msg.member.addRole(role).then(() => {
-          msg.author.send('Your account has been verified and new permissions applied');
+        msg.member.addRole(role).catch( (err) => {
+          console.error('failed to assign role: ', err);
         });
+        msg.author.send('Your account has been verified and new permissions applied').catch( (err) => {
+          console.error('failed to send message: ', err);
+        })
+        msg.channel.send(`Welcome ${msg.author} (SA: ${value} )` ).catch( (err) => {
+          console.error('failed to send message: ', err);
+        });
+        
       } else {
-        console.error(`Failed to Auth'd User ${msg.author.username} due to ${error}`);
-        msg.author.send(`Failed to authenticate due to ${error}`);
+        console.error(`Failed to Auth'd User ${msg.author.username} due to ${value}`);
+        msg.author.send(`Failed to authenticate due to ${value}`);
       }
     });
   } else if (msg.channel.type === 'dm') {
