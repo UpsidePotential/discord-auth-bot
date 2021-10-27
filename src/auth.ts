@@ -22,15 +22,15 @@ export class Auth {
         embed: {
           color: 3447003,
           title: 'Welcome to our discord',
-          description: 'To verify you have an active account. Edit your profile and add the token anywhere on the profile page. '
-                    + 'Once finished, reply to this message with your Username. You account page will be scaned for the token then your account with be authenticated.',
+          description: 'To verify you have an active account. Edit your profile and add the token to your profile page in the About Me section. '
+                    + 'Once finished, reply to this message with your Username. Your account page will be scaned for the token. Then your account with be authenticated.',
           fields: [
             { name: 'Edit Profile', value: 'https://forums.somethingawful.com/member.php?action=editprofile' },
           ],
         },
       });
 
-      user.send(`token: ${token}`);
+      user.send(`Token: ${token}`);
 
       this.authUsers.push({ discordUser: user.id, token, callback });
     }

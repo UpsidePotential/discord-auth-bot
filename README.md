@@ -32,3 +32,7 @@ Follow create .env file section and place in root folder.
 
 # To Create a Windows Portable Exe
 * npm run package
+
+# Creating a New Release
+On Main branch. Push a new Tag starting with v****.
+A new release will be created along with a new build.
