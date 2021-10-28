@@ -24,15 +24,14 @@ client.on('message', (msg) => {
           return;
         }
         console.log(`Success Auth'd User ${msg.author.username}`);
-        msg.member.addRole(role).catch( (err) => {
-          console.error('failed to assign role: ', err);
-        });
-        msg.author.send('Your account has been verified and new permissions applied').catch( (err) => {
-          console.error('failed to send message: ', err);
-        })
-        msg.channel.send(`Welcome ${msg.author} (SA: ${value} )` ).catch( (err) => {
-          console.error('failed to send message: ', err);
-        });
+        
+        const addRole = msg.member.addRole(role);
+        const sendDm = msg.author.send('Your account has been verified and new permissions applied');
+        const sendChannelMsg = msg.channel.send(`Welcome ${msg.author} (SA: ${value} )` );
+
+        Promise.all([addRole, sendDm,sendChannelMsg])
+          .then( () => console.log('Assigned new role.'))
+          .catch( (err) => console.error('Failed to assign role: ', err));
         
       } else {
         console.error(`Failed to Auth'd User ${msg.author.username} due to ${value}`);
